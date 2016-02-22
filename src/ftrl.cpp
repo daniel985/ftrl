@@ -56,14 +56,13 @@ FTRL::~FTRL()
 {
 }
 
-int32_t FTRL::init(paramType_t _l1, paramType_t _l2, paramType_t _alpha, paramType_t _beta, paramType_t _thr, numType_t _thread_num)
+int32_t FTRL::init(paramType_t _l1, paramType_t _l2, paramType_t _alpha, paramType_t _beta, paramType_t _thr)
 {
 	l1 = _l1;
 	l2 = _l2;
 	alpha = _alpha;
 	beta = _beta;
 	thr = _thr;
-	thread_num = _thread_num;
 	LOG(INFO) << "ftrl init succ!";
 	return 0;
 }
@@ -190,15 +189,18 @@ int32_t FTRL::update(valueType_t &p, std::vector<feaType_t> &features, labelType
 	return 0;
 }
 
-int32_t FTRL::load_data(const std::string data_file, std::vector<Sample> data)
+int32_t FTRL::train(const std::string sample_file)
 {
+	valueType_t total_loss = 0.0;
+	uint64_t total_count = 0;
 	std::ifstream rsf;
-	rsf.open(data_file.c_str(),std::ifstream::in);
+	rsf.open(sample_file.c_str(),std::ifstream::in);
 	if (!rsf.is_open())
 	{
-		LOG(ERROR) << "data_file is empty!";
+		LOG(ERROR) << "sample_file is empty!";
 		return -1;
 	}
+
 	std::string line;
 	while(getline(rsf,line))
 	{
@@ -208,31 +210,23 @@ int32_t FTRL::load_data(const std::string data_file, std::vector<Sample> data)
 		std::vector<std::string> SamVec = splitString(line, ",");
 		if (2 != SamVec.size())
 		{
-			LOG(ERROR) << "parse data line failed!" << line;
+			LOG(ERROR) << "parse sample line failed!" << line;
 			continue;
 		}
-		Sample sample;
-		sample.label = atoi(SamVec[0].c_str());
-		sample.features = splitString(SamVec[1], " ");
-		data.push_back(sample);
-	}
-	rsf.close();
-
-	return 0;
-}
-
-int32_t FTRL::train(const std::vector<Sample> &data)
-{
-	valueType_t total_loss = 0.0;
-	uint64_t total_count = 0;
+		labelType_t y = atoi(SamVec[0].c_str());
+		std::vector<feaType_t> x = splitString(SamVec[1], " ");
 		valueType_t p = predict(x);
 		total_loss += logloss(p,y);
 		total_count += 1;
 		update(p,x,y);
+	}
+	rsf.close();
+
 	LOG(INFO) << "train finishes!";
 	LOG(INFO) << "total loss:" << total_loss; 
 	LOG(INFO) << "total_count:" << total_count;
 	LOG(INFO) << "avg_loss:" << total_loss/total_count;
+	return 0;
 }
 
 int32_t FTRL::output_model(const std::string model_file)
@@ -250,7 +244,7 @@ int32_t FTRL::output_model(const std::string model_file)
 		feaType_t feature = iter->first;
 		WgtInfo wgt = iter->second;
 		paramType_t lr = 1/(1 + sqrt(wgt.pc+wgt.nc));
-		//LOG(INFO) << feature << ":P:" << wgt.pc << ",N:" << wgt.nc << "," << lr << "," << wgt.w;
+		LOG(INFO) << feature << ":P:" << wgt.pc << ",N:" << wgt.nc << "," << lr << "," << wgt.w;
 		if (lr <= thr && fabs(wgt.w) >= MIN)
 		{
 			wmf << wgt.w 

@@ -21,7 +21,6 @@ private:
 	paramType_t alpha;
 	paramType_t beta;
 	paramType_t thr;
-	numType_t thread_num;
 	std::tr1::unordered_map<feaType_t,WgtInfo> WgtMap;
 private:
 	FTRL();
@@ -49,8 +48,7 @@ public:
 	int32_t destroy();
 	int32_t load_weight(const std::string batch_weight_file);
 	valueType_t predict(std::vector<feaType_t> &features);
-	int32_t load_data(const std::string data_file, std::vector<Sample> data);
-	int32_t train(const std::vector<Sample> &data);
+	int32_t train(const std::string sample_file);
 	int32_t output_model(const std::string model_file);
 };
 
