@@ -1,2 +1,2 @@
 # ftrl
-ftrl C++ implemention
+ftrl C++ implementation
